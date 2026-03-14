@@ -96,9 +96,17 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ isOpen, onClos
               >
                 <textarea
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={(e) => {
+                    setContent(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
                   placeholder="الصق النص هنا... (Ctrl+V) أو اسحب وأفلت ملفاً نصياً"
-                  className="w-full h-full min-h-[200px] bg-transparent p-6 text-sm outline-none resize-none text-right"
+                  className="w-full min-h-[200px] bg-transparent p-6 text-sm outline-none resize-none text-right overflow-hidden"
                   dir="rtl"
                 />
               </div>

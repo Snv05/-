@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Bot, Sparkles, Search, Download, CheckCircle2, FlaskConical, Type, Table as TableIcon, Activity, Image as ImageIcon } from 'lucide-react';
+import { X, Bot, Sparkles, Search, Download, CheckCircle2, FlaskConical, Type, Table as TableIcon, Activity, Image as ImageIcon, MousePointer2 } from 'lucide-react';
 import { generateActivityContent, searchEducationalResources } from '../services/geminiService';
 
 interface SmartAssistantProps {
@@ -89,9 +89,17 @@ export const SmartAssistantContent: React.FC<{ onTransfer: (content: string) => 
         <div className="relative">
           <textarea
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+            }}
+            onFocus={(e) => {
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+            }}
             placeholder={mode === 'generate' ? 'مثال: تجربة للكشف عن النشاء في الخبز...' : 'مثال: مواقع تعليمية لدروس السنة الرابعة متوسط...'}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 ring-primary/20 outline-none min-h-[100px] resize-none"
+            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 ring-primary/20 outline-none min-h-[100px] resize-none overflow-hidden"
           />
           <button 
             onClick={handleAction}
@@ -122,16 +130,37 @@ export const SmartAssistantContent: React.FC<{ onTransfer: (content: string) => 
                     تم النسخ بنجاح!
                   </motion.span>
                 )}
-                <button 
-                  onClick={() => handleTransfer(result)}
-                  className="flex items-center gap-1.5 text-primary font-bold text-xs hover:underline"
-                >
-                  <Download className="w-3 h-3 rotate-180" /> نقل للمذكرة
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => handleTransfer(result)}
+                    className="flex items-center gap-1.5 text-primary font-bold text-xs hover:bg-primary/5 px-2 py-1 rounded-lg transition-colors"
+                    title="نقل كل النص للمذكرة"
+                  >
+                    <Download className="w-3 h-3 rotate-180" /> نقل الكل
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const selection = window.getSelection()?.toString();
+                      if (selection) handleTransfer(selection);
+                      else alert('يرجى تحديد نص أولاً لنقله');
+                    }}
+                    className="flex items-center gap-1.5 text-secondary font-bold text-xs hover:bg-secondary/5 px-2 py-1 rounded-lg transition-colors"
+                    title="نقل الجزء المحدد فقط"
+                  >
+                    <MousePointer2 className="w-3 h-3" /> نقل المحدد
+                  </button>
+                </div>
               </div>
             </div>
             <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">
-              {result}
+              {result.startsWith('data:image') ? (
+                <div className="space-y-3">
+                  <img src={result} alt="Generated" className="w-full rounded-xl border border-slate-200" />
+                  <p className="text-[10px] text-slate-400 text-center italic">تم توليد الرسم بنجاح. يمكنك نقله للمذكرة.</p>
+                </div>
+              ) : (
+                result
+              )}
             </div>
           </div>
         </motion.div>

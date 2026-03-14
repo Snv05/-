@@ -4,7 +4,32 @@ import { GoogleGenAI, Type } from "@google/genai";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export const generateActivityContent = async (topic: string, type: 'text' | 'image' | 'table' | 'curve' | 'experiment') => {
-  const model = "gemini-3-flash-preview";
+  if (type === 'image') {
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: {
+          parts: [
+            {
+              text: `رسم تخطيطي علمي لمادة العلوم الطبيعية حول: ${topic}. يجب أن يكون الرسم واضحا، تعليميا، وبخلفية بيضاء.`,
+            },
+          ],
+        },
+      });
+      
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+          return `data:image/png;base64,${part.inlineData.data}`;
+        }
+      }
+      return "تعذر توليد الصورة.";
+    } catch (error) {
+      console.error("Image Generation Error:", error);
+      return "حدث خطأ أثناء توليد الصورة.";
+    }
+  }
+
+  const model = "gemini-3.1-pro-preview";
   
   const prompt = `
     أنت مساعد ذكي ألستاذ علوم طبيعية في التعليم المتوسط بالجزائر.

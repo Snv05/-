@@ -100,10 +100,10 @@ interface LessonPlanType {
 // --- Constants ---
 
 const LEVELS: Level[] = [
-  { id: '1', title: '1 متوسط', subtitle: 'السنة الأولى متوسط', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', count: 11 },
+  { id: '1', title: '1 متوسط', subtitle: 'السنة الأولى متوسط', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', count: 15 },
   { id: '2', title: '2 متوسط', subtitle: 'السنة الثانية متوسط', color: 'bg-sky-50 text-sky-600 border-sky-100', count: 11 },
-  { id: '3', title: '3 متوسط', subtitle: 'السنة الثالثة متوسط', color: 'bg-amber-50 text-amber-600 border-amber-100', count: 11 },
-  { id: '4', title: '4 متوسط', subtitle: 'السنة الرابعة متوسط', color: 'bg-rose-50 text-rose-600 border-rose-100', count: 11 },
+  { id: '3', title: '3 متوسط', subtitle: 'السنة الثالثة متوسط', color: 'bg-amber-50 text-amber-600 border-amber-100', count: 12 },
+  { id: '4', title: '4 متوسط', subtitle: 'السنة الرابعة متوسط', color: 'bg-rose-50 text-rose-600 border-rose-100', count: 13 },
 ];
 
 const QUICK_TOOLS: Tool[] = [
@@ -125,6 +125,221 @@ const LESSON_PLAN_TYPES: LessonPlanType[] = [
 ];
 
 // --- Components ---
+
+const RichTextDisplay = ({ content }: { content: string }) => {
+  if (!content) return null;
+  const lines = content.split('\n');
+  
+  return (
+    <div className="space-y-1">
+      {lines.map((line, i) => {
+        let alignment = 'text-right';
+        let cleanLine = line;
+        
+        if (line.startsWith('[center]') && line.endsWith('[/center]')) {
+          alignment = 'text-center';
+          cleanLine = line.slice(8, -9);
+        } else if (line.startsWith('[right]') && line.endsWith('[/right]')) {
+          alignment = 'text-right';
+          cleanLine = line.slice(7, -8);
+        }
+
+        const parts = cleanLine.split(/(!\[.*?\]\(.*?\))|(\*\*.*?\*\*)/g);
+        
+        return (
+          <div key={i} className={alignment}>
+            {parts.map((part, j) => {
+              if (!part) return null;
+              if (part.startsWith('![') && part.includes('](')) {
+                const url = part.match(/\((.*?)\)/)?.[1];
+                return <img key={j} src={url} alt="Embedded" className="max-w-full my-2 rounded-lg border border-slate-100 inline-block" />;
+              }
+              if (part.startsWith('**') && part.endsWith('**')) {
+                return <strong key={j}>{part.slice(2, -2)}</strong>;
+              }
+              return <span key={j}>{part}</span>;
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const PrintContent = ({ lessonData, level, type, theme, user }: { lessonData: any, level: Level, type: LessonPlanType, theme: string, user: User }) => {
+  const isTest = type.id.includes('test') && !type.id.includes('correction') && !type.id.includes('discussion');
+  const isCorrection = type.id.includes('correction') || type.id.includes('discussion');
+
+  return (
+    <div className={`bg-white overflow-hidden ${
+      theme === 'modern' ? 'font-sans' : theme === 'minimal' ? 'font-mono' : 'font-serif'
+    }`}>
+      <div className={`p-6 border-b border-slate-200 text-center ${
+        theme === 'modern' ? 'bg-sky-50' : theme === 'minimal' ? 'bg-white' : 'bg-primary/5'
+      }`}>
+        <h2 className={`text-2xl font-black mb-1 ${
+          theme === 'modern' ? 'text-sky-600' : theme === 'minimal' ? 'text-slate-900' : 'text-primary'
+        }`}>{type.title} الرقمية</h2>
+        <p className="text-slate-500 text-sm">مادة العلوم الطبيعية - {level.subtitle}</p>
+      </div>
+
+      <div className="p-0 overflow-x-auto">
+        <table className={`w-full border-collapse text-[11px] ${
+          theme === 'modern' ? 'border-sky-100' : theme === 'minimal' ? 'border-slate-100' : 'border-slate-200'
+        }`}>
+          <tbody>
+            <tr>
+              <td className={`border p-2 font-bold w-24 ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>المتوسطة:</td>
+              <td className="border border-slate-200 p-2 w-1/4">{lessonData.school}</td>
+              <td className={`border p-2 font-bold w-24 ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>الأستاذ:</td>
+              <td className="border border-slate-200 p-2 w-1/4">{lessonData.teacher}</td>
+              <td className={`border p-2 font-bold w-24 ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>المستوى:</td>
+              <td className={`border p-2 w-24 text-center font-bold ${
+                theme === 'modern' ? 'text-sky-600 border-sky-100' : 'text-primary border-slate-200'
+              }`}>{level.title}</td>
+              <td className={`border p-2 font-bold w-24 ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>رقم المذكرة:</td>
+              <td className="border border-slate-200 p-2 w-16 text-center font-bold">{lessonData.noteNumber}</td>
+            </tr>
+            <tr>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>مديرية التربية:</td>
+              <td colSpan={7} className="border border-slate-200 p-2">{lessonData.directorate}</td>
+            </tr>
+            <tr>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-secondary border-slate-200'
+              }`}>الكفاءة الختامية:</td>
+              <td colSpan={7} className="border border-slate-200 p-2"><RichTextDisplay content={lessonData.competency} /></td>
+            </tr>
+            <tr>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>الميدان:</td>
+              <td colSpan={3} className="border border-slate-200 p-2">{lessonData.field}</td>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>المقطع التعلمي:</td>
+              <td colSpan={3} className="border border-slate-200 p-2">{lessonData.section}</td>
+            </tr>
+            <tr>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>المورد التعلمي:</td>
+              <td colSpan={3} className="border border-slate-200 p-2">{lessonData.resource}</td>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>تعلم المورد:</td>
+              <td colSpan={3} className="border border-slate-200 p-2">{lessonData.learningResource}</td>
+            </tr>
+            <tr>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-secondary border-slate-200'
+              }`}>مركبة الكفاءة:</td>
+              <td colSpan={7} className="border border-slate-200 p-2"><RichTextDisplay content={lessonData.competencyComponent} /></td>
+            </tr>
+            <tr>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-secondary border-slate-200'
+              }`}>معايير التقويم:</td>
+              <td colSpan={7} className="border border-slate-200 p-2"><RichTextDisplay content={lessonData.evaluationCriteria} /></td>
+            </tr>
+            <tr>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>الموارد المعرفية:</td>
+              <td colSpan={7} className="border border-slate-200 p-2"><RichTextDisplay content={lessonData.knowledgeResources} /></td>
+            </tr>
+            <tr>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>الوسائل:</td>
+              <td className="border border-slate-200 p-2">{lessonData.tools}</td>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>المراجع:</td>
+              <td colSpan={3} className="border border-slate-200 p-2">{lessonData.references}</td>
+              <td className={`border p-2 font-bold ${
+                theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}>الزمن الكلي:</td>
+              <td className="border border-slate-200 p-2">{lessonData.totalTime}</td>
+            </tr>
+            <tr className="bg-secondary/10">
+              <td colSpan={8} className="border border-slate-200 p-2 text-center font-bold text-secondary text-sm">سير الحصة (الأنشطة)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className="p-0">
+          {isTest ? (
+            <div className="p-6 space-y-8">
+              {/* Test specific rendering */}
+              <p className="text-center italic text-slate-400">محتوى الفرض المحروس</p>
+            </div>
+          ) : isCorrection ? (
+            <div className="p-6 space-y-10">
+              {/* Correction specific rendering */}
+              <p className="text-center italic text-slate-400">محتوى تصحيح الفرض/الاختبار</p>
+            </div>
+          ) : (
+            <table className="w-full border-collapse text-[10px]">
+              <thead>
+                <tr className="bg-slate-50">
+                  <th className="border border-slate-200 p-2 text-secondary w-24">المراحل</th>
+                  <th className="border border-slate-200 p-2 text-secondary">نشاط الأستاذ</th>
+                  <th className="border border-slate-200 p-2 text-secondary">نشاط المتعلم</th>
+                  <th className="border border-slate-200 p-2 text-secondary w-16">الزمن</th>
+                  <th className="border border-slate-200 p-2 text-secondary w-24">ملاحظة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lessonData.stages.map((stage: any, i: number) => (
+                  <tr key={i}>
+                    <td className="border border-slate-200 p-2 font-bold bg-slate-50 text-slate-700">{stage.title}</td>
+                    <td className="border border-slate-200 p-2"><RichTextDisplay content={stage.teacher} /></td>
+                    <td className="border border-slate-200 p-2"><RichTextDisplay content={stage.student} /></td>
+                    <td className="border border-slate-200 p-2 text-center">{stage.time}</td>
+                    <td className="border border-slate-200 p-2"><RichTextDisplay content={stage.note} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Signature Area */}
+        <div className="p-8 border-t border-slate-100 grid grid-cols-3 gap-8">
+          <div className="text-center space-y-4">
+            <p className="text-xs font-bold text-slate-500">توقيع الأستاذ</p>
+            <div className="h-20 border-2 border-dashed border-slate-100 rounded-2xl flex items-center justify-center overflow-hidden">
+              {user.avatar ? (
+                <img src={user.avatar} alt="الختم" className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-[10px] text-slate-300">الختم الرقمي</span>
+              )}
+            </div>
+          </div>
+          <div className="text-center space-y-4">
+            <p className="text-xs font-bold text-slate-500">توقيع السيد المدير</p>
+            <div className="h-20 border-2 border-dashed border-slate-100 rounded-2xl"></div>
+          </div>
+          <div className="text-center space-y-4">
+            <p className="text-xs font-bold text-slate-500">توقيع السيد المفتش</p>
+            <div className="h-20 border-2 border-dashed border-slate-100 rounded-2xl"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const SidebarItem = ({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) => (
   <button 
@@ -380,6 +595,13 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [activeCell, setActiveCell] = useState<{ stageIndex: number, col: 'teacher' | 'student' | 'note' } | null>(null);
   const [theme, setTheme] = useState<'classic' | 'modern' | 'minimal'>('classic');
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  
+  const adjustHeight = (e: React.ChangeEvent<HTMLTextAreaElement> | React.FocusEvent<HTMLTextAreaElement>) => {
+    const target = e.target;
+    target.style.height = 'auto';
+    target.style.height = `${target.scrollHeight}px`;
+  };
   
   const printRef = useRef<HTMLDivElement>(null);
   const [lessonData, setLessonData] = useState({
@@ -463,7 +685,13 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
     if (activeCell) {
       const newStages = [...lessonData.stages];
       const currentContent = newStages[activeCell.stageIndex][activeCell.col];
-      newStages[activeCell.stageIndex][activeCell.col] = currentContent ? `${currentContent}\n${content}` : content;
+      
+      let finalContent = content;
+      if (content.startsWith('data:image')) {
+        finalContent = `\n![image](${content})\n`;
+      }
+
+      newStages[activeCell.stageIndex][activeCell.col] = currentContent ? `${currentContent}\n${finalContent}` : finalContent;
       setLessonData({ ...lessonData, stages: newStages });
       setIsLibraryOpen(false);
     }
@@ -512,6 +740,12 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
 
   return (
     <div className="space-y-8 pb-20 relative">
+      <div className="hidden">
+        <div ref={printRef}>
+          <PrintContent lessonData={lessonData} level={level} type={type} theme={theme} user={user} />
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500">
@@ -535,14 +769,62 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
           <button onClick={() => setIsLibraryOpen(true)} className="btn-secondary text-xs py-2 bg-secondary/5 text-secondary border-secondary/20">
             <Library className="w-4 h-4" /> مكتبة الموارد
           </button>
+          <button onClick={() => setIsPreviewOpen(true)} className="btn-secondary text-xs py-2 bg-primary/5 text-primary border-primary/20">
+            <Eye className="w-4 h-4" /> معاينة المذكرة
+          </button>
           <button onClick={exportToExcel} className="btn-secondary text-xs py-2">
             <FileSpreadsheet className="w-4 h-4" /> Excel
           </button>
           <button onClick={() => handlePrint()} className="btn-primary text-xs py-2">
-            <Printer className="w-4 h-4" /> معاينة وطباعة
+            <Printer className="w-4 h-4" /> طباعة
           </button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isPreviewOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-10">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsPreviewOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-full"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary text-white p-2 rounded-xl">
+                    <Eye className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-slate-900">معاينة قبل الطباعة</h2>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase">راجع مذكرتك وتأكد من التنسيق</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => handlePrint()} className="btn-primary text-xs py-2">
+                    <Printer className="w-4 h-4" /> تأكيد الطباعة
+                  </button>
+                  <button onClick={() => setIsPreviewOpen(false)} className="p-2 hover:bg-white rounded-full transition-colors text-slate-400">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-10 bg-slate-200/50 custom-scrollbar">
+                <div className="bg-white shadow-xl mx-auto max-w-[210mm] min-h-[297mm] p-[20mm] origin-top scale-[0.85] sm:scale-100 transition-transform">
+                  <PrintContent lessonData={lessonData} level={level} type={type} theme={theme} user={user} />
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <div className="card space-y-6">
         <div className="flex items-center gap-2 text-primary mb-4">
@@ -608,7 +890,7 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
         </div>
       </div>
 
-      <div ref={printRef} className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm print:shadow-none print:border-none ${
+      <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm ${
         theme === 'modern' ? 'font-sans' : theme === 'minimal' ? 'font-mono' : 'font-serif'
       }`}>
         <div className={`p-6 border-b border-slate-200 text-center ${
@@ -636,85 +918,125 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
           }`}>
             <tbody>
               <tr>
-                <td className={`border p-2 font-bold w-24 ${
+                <td className={`border p-2 font-bold w-24 min-w-[80px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>المتوسطة:</td>
                 <td className="border border-slate-200 p-2 w-1/4"><input type="text" value={lessonData.school} onChange={(e) => setLessonData({...lessonData, school: e.target.value})} className="w-full outline-none bg-transparent" /></td>
-                <td className={`border p-2 font-bold w-24 ${
+                <td className={`border p-2 font-bold w-24 min-w-[80px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>الأستاذ:</td>
                 <td className="border border-slate-200 p-2 w-1/4"><input type="text" value={lessonData.teacher} onChange={(e) => setLessonData({...lessonData, teacher: e.target.value})} className="w-full outline-none bg-transparent" /></td>
-                <td className={`border p-2 font-bold w-24 ${
+                <td className={`border p-2 font-bold w-24 min-w-[80px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>المستوى:</td>
                 <td className={`border p-2 w-24 text-center font-bold ${
                   theme === 'modern' ? 'text-sky-600 border-sky-100' : 'text-primary border-slate-200'
                 }`}>{level.title}</td>
-                <td className={`border p-2 font-bold w-24 ${
+                <td className={`border p-2 font-bold w-24 min-w-[80px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>رقم المذكرة:</td>
                 <td className="border border-slate-200 p-2 w-16 text-center font-bold"><input type="text" value={lessonData.noteNumber} onChange={(e) => setLessonData({...lessonData, noteNumber: e.target.value})} className="w-full outline-none bg-transparent text-center" /></td>
               </tr>
               <tr>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>مديرية التربية:</td>
                 <td colSpan={7} className="border border-slate-200 p-2"><input type="text" value={lessonData.directorate} onChange={(e) => setLessonData({...lessonData, directorate: e.target.value})} placeholder="مديرية التربية" className="w-full outline-none bg-transparent" /></td>
               </tr>
               <tr>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-secondary border-slate-200'
                 }`}>الكفاءة الختامية:</td>
-                <td colSpan={7} className="border border-slate-200 p-2"><textarea value={lessonData.competency} onChange={(e) => setLessonData({...lessonData, competency: e.target.value})} className="w-full min-h-[40px] outline-none bg-transparent resize-none" /></td>
+                <td colSpan={7} className="border border-slate-200 p-2">
+                  <textarea 
+                    value={lessonData.competency} 
+                    onChange={(e) => {
+                      setLessonData({...lessonData, competency: e.target.value});
+                      adjustHeight(e);
+                    }} 
+                    onFocus={adjustHeight}
+                    className="w-full min-h-[40px] outline-none bg-transparent resize-none overflow-hidden" 
+                  />
+                </td>
               </tr>
               <tr>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>الميدان:</td>
                 <td colSpan={3} className="border border-slate-200 p-2"><input type="text" value={lessonData.field} onChange={(e) => setLessonData({...lessonData, field: e.target.value})} className="w-full outline-none bg-transparent" /></td>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>المقطع التعلمي:</td>
                 <td colSpan={3} className="border border-slate-200 p-2"><input type="text" value={lessonData.section} onChange={(e) => setLessonData({...lessonData, section: e.target.value})} className="w-full outline-none bg-transparent" /></td>
               </tr>
               <tr>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>المورد التعلمي:</td>
                 <td colSpan={3} className="border border-slate-200 p-2"><input type="text" value={lessonData.resource} onChange={(e) => setLessonData({...lessonData, resource: e.target.value})} className="w-full outline-none bg-transparent" /></td>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>تعلم المورد:</td>
                 <td colSpan={3} className="border border-slate-200 p-2"><input type="text" value={lessonData.learningResource} onChange={(e) => setLessonData({...lessonData, learningResource: e.target.value})} className="w-full outline-none bg-transparent" /></td>
               </tr>
               <tr>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-secondary border-slate-200'
                 }`}>مركبة الكفاءة:</td>
-                <td colSpan={7} className="border border-slate-200 p-2"><textarea value={lessonData.competencyComponent} onChange={(e) => setLessonData({...lessonData, competencyComponent: e.target.value})} className="w-full min-h-[40px] outline-none bg-transparent resize-none" /></td>
+                <td colSpan={7} className="border border-slate-200 p-2">
+                  <textarea 
+                    value={lessonData.competencyComponent} 
+                    onChange={(e) => {
+                      setLessonData({...lessonData, competencyComponent: e.target.value});
+                      adjustHeight(e);
+                    }} 
+                    onFocus={adjustHeight}
+                    className="w-full min-h-[40px] outline-none bg-transparent resize-none overflow-hidden" 
+                  />
+                </td>
               </tr>
               <tr>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-secondary border-slate-200'
                 }`}>معايير التقويم:</td>
-                <td colSpan={7} className="border border-slate-200 p-2"><textarea value={lessonData.evaluationCriteria} onChange={(e) => setLessonData({...lessonData, evaluationCriteria: e.target.value})} className="w-full min-h-[40px] outline-none bg-transparent resize-none" /></td>
+                <td colSpan={7} className="border border-slate-200 p-2">
+                  <textarea 
+                    value={lessonData.evaluationCriteria} 
+                    onChange={(e) => {
+                      setLessonData({...lessonData, evaluationCriteria: e.target.value});
+                      adjustHeight(e);
+                    }} 
+                    onFocus={adjustHeight}
+                    className="w-full min-h-[40px] outline-none bg-transparent resize-none overflow-hidden" 
+                  />
+                </td>
               </tr>
               <tr>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>الموارد المعرفية:</td>
-                <td colSpan={7} className="border border-slate-200 p-2"><textarea value={lessonData.knowledgeResources} onChange={(e) => setLessonData({...lessonData, knowledgeResources: e.target.value})} className="w-full min-h-[40px] outline-none bg-transparent resize-none" /></td>
+                <td colSpan={7} className="border border-slate-200 p-2">
+                  <textarea 
+                    value={lessonData.knowledgeResources} 
+                    onChange={(e) => {
+                      setLessonData({...lessonData, knowledgeResources: e.target.value});
+                      adjustHeight(e);
+                    }} 
+                    onFocus={adjustHeight}
+                    className="w-full min-h-[40px] outline-none bg-transparent resize-none overflow-hidden" 
+                  />
+                </td>
               </tr>
               <tr>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>الوسائل:</td>
                 <td className="border border-slate-200 p-2"><input type="text" value={lessonData.tools} onChange={(e) => setLessonData({...lessonData, tools: e.target.value})} className="w-full outline-none bg-transparent" /></td>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>المراجع:</td>
                 <td colSpan={3} className="border border-slate-200 p-2"><input type="text" value={lessonData.references} onChange={(e) => setLessonData({...lessonData, references: e.target.value})} className="w-full outline-none bg-transparent" /></td>
-                <td className={`border p-2 font-bold ${
+                <td className={`border p-2 font-bold w-24 min-w-[100px] ${
                   theme === 'modern' ? 'bg-sky-50/50 text-sky-700 border-sky-100' : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>الزمن الكلي:</td>
                 <td className="border border-slate-200 p-2"><input type="text" value={lessonData.totalTime} onChange={(e) => setLessonData({...lessonData, totalTime: e.target.value})} className="w-full outline-none bg-transparent text-center" /></td>
@@ -747,20 +1069,37 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
                     <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-400">مركب الكفاءة:</label>
-                        <textarea className="w-full min-h-[40px] bg-white border border-slate-100 rounded-xl p-3 text-xs outline-none resize-none" />
+                        <textarea 
+                          onChange={adjustHeight}
+                          onFocus={adjustHeight}
+                          className="w-full min-h-[40px] bg-white border border-slate-100 rounded-xl p-3 text-xs outline-none resize-none overflow-hidden" 
+                        />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-400">مؤشر التقويم:</label>
-                        <textarea className="w-full min-h-[40px] bg-white border border-slate-100 rounded-xl p-3 text-xs outline-none resize-none" />
+                        <textarea 
+                          onChange={adjustHeight}
+                          onFocus={adjustHeight}
+                          className="w-full min-h-[40px] bg-white border border-slate-100 rounded-xl p-3 text-xs outline-none resize-none overflow-hidden" 
+                        />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-400">السندات:</label>
-                        <textarea placeholder="نص، صور، وثائق..." className="w-full min-h-[40px] bg-white border border-slate-100 rounded-xl p-3 text-xs outline-none resize-none italic" />
+                        <textarea 
+                          placeholder="نص، صور، وثائق..." 
+                          onChange={adjustHeight}
+                          onFocus={adjustHeight}
+                          className="w-full min-h-[40px] bg-white border border-slate-100 rounded-xl p-3 text-xs outline-none resize-none italic overflow-hidden" 
+                        />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-400">نص الوضعية:</label>
                         <div className="relative">
-                          <textarea className="w-full min-h-[100px] bg-white border border-slate-100 rounded-xl p-3 text-xs outline-none resize-none" />
+                          <textarea 
+                            onChange={adjustHeight}
+                            onFocus={adjustHeight}
+                            className="w-full min-h-[100px] bg-white border border-slate-100 rounded-xl p-3 text-xs outline-none resize-none overflow-hidden" 
+                          />
                           <button className="absolute bottom-3 left-3 p-2 hover:bg-slate-50 rounded-lg text-slate-400">
                             <ImageIcon className="w-4 h-4" />
                           </button>
@@ -830,7 +1169,11 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
                               <td className="border border-slate-200 p-3">
                                 <div className="flex gap-2 items-start">
                                   <span className="text-[10px] font-bold text-slate-400 mt-1">{i + 1}</span>
-                                  <textarea className="w-full min-h-[40px] outline-none resize-none bg-transparent" />
+                                  <textarea 
+                                    onChange={adjustHeight}
+                                    onFocus={adjustHeight}
+                                    className="w-full min-h-[40px] outline-none resize-none bg-transparent overflow-hidden" 
+                                  />
                                   <button className="p-1 text-slate-300 hover:text-primary">
                                     <ImageIcon className="w-3 h-3" />
                                   </button>
@@ -877,7 +1220,12 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
                               {j === 0 && <td rowSpan={criteria.questions.length} className="border border-slate-200 p-3 font-bold bg-slate-50 text-center">{criteria.title}</td>}
                               <td className="border border-slate-200 p-3 text-center bg-slate-50/30">{q}</td>
                               <td className="border border-slate-200 p-3">
-                                <textarea defaultValue={criteria.note || ''} className="w-full min-h-[40px] outline-none resize-none bg-transparent" />
+                                <textarea 
+                                  defaultValue={criteria.note || ''} 
+                                  onChange={adjustHeight}
+                                  onFocus={adjustHeight}
+                                  className="w-full min-h-[40px] outline-none resize-none bg-transparent overflow-hidden" 
+                                />
                               </td>
                               <td className="border border-slate-200 p-3"><input type="text" className="w-full outline-none text-center bg-transparent" /></td>
                             </tr>
@@ -898,11 +1246,11 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
                 <table className="w-full border-collapse text-[10px]">
                   <thead>
                     <tr className="bg-slate-50">
-                      <th className="border border-slate-200 p-2 text-secondary w-24">المراحل</th>
-                      <th className="border border-slate-200 p-2 text-secondary">نشاط الأستاذ</th>
-                      <th className="border border-slate-200 p-2 text-secondary">نشاط المتعلم</th>
-                      <th className="border border-slate-200 p-2 text-secondary w-16">الزمن</th>
-                      <th className="border border-slate-200 p-2 text-secondary w-24">ملاحظة</th>
+                      <th className="border border-slate-200 p-2 text-secondary w-24 min-w-[80px]">المراحل</th>
+                      <th className="border border-slate-200 p-2 text-secondary min-w-[200px]">نشاط الأستاذ</th>
+                      <th className="border border-slate-200 p-2 text-secondary min-w-[200px]">نشاط المتعلم</th>
+                      <th className="border border-slate-200 p-2 text-secondary w-16 min-w-[60px]">الزمن</th>
+                      <th className="border border-slate-200 p-2 text-secondary w-24 min-w-[100px]">ملاحظة</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -916,8 +1264,10 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
                           const newStages = [...lessonData.stages];
                           newStages[i].teacher = e.target.value;
                           setLessonData({...lessonData, stages: newStages});
+                          adjustHeight(e);
                         }}
-                        className="w-full min-h-[100px] outline-none resize-none bg-transparent p-2" 
+                        onFocus={adjustHeight}
+                        className="w-full min-h-[100px] outline-none resize-none bg-transparent p-2 overflow-hidden" 
                       />
                       <button 
                         onClick={() => {
@@ -936,8 +1286,10 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
                           const newStages = [...lessonData.stages];
                           newStages[i].student = e.target.value;
                           setLessonData({...lessonData, stages: newStages});
+                          adjustHeight(e);
                         }}
-                        className="w-full min-h-[100px] outline-none resize-none bg-transparent p-2" 
+                        onFocus={adjustHeight}
+                        className="w-full min-h-[100px] outline-none resize-none bg-transparent p-2 overflow-hidden" 
                       />
                       <button 
                         onClick={() => {
@@ -954,11 +1306,19 @@ const Editor = ({ level, type, onBack, user }: { level: Level, type: LessonPlanT
                       newStages[i].time = e.target.value;
                       setLessonData({...lessonData, stages: newStages});
                     }} className="w-full outline-none text-center bg-transparent" /></td>
-                    <td className="border border-slate-200 p-2"><textarea value={stage.note} onChange={(e) => {
-                      const newStages = [...lessonData.stages];
-                      newStages[i].note = e.target.value;
-                      setLessonData({...lessonData, stages: newStages});
-                    }} className="w-full min-h-[100px] outline-none resize-none bg-transparent" /></td>
+                    <td className="border border-slate-200 p-2">
+                      <textarea 
+                        value={stage.note} 
+                        onChange={(e) => {
+                          const newStages = [...lessonData.stages];
+                          newStages[i].note = e.target.value;
+                          setLessonData({...lessonData, stages: newStages});
+                          adjustHeight(e);
+                        }} 
+                        onFocus={adjustHeight}
+                        className="w-full min-h-[100px] outline-none resize-none bg-transparent overflow-hidden" 
+                      />
+                    </td>
                   </tr>
                 ))}
                   </tbody>

@@ -31,17 +31,32 @@ export const AnnualDistribution: React.FC<AnnualDistributionProps> = ({ user, on
     documentTitle: `التوزيع_السنوي_${user.name}`,
   });
 
-  const [selectedLevel, setSelectedLevel] = useState('1 متوسط');
+  const [selectedLevel, setSelectedLevel] = useState('1');
 
-  // Mock data for annual distribution
-  const distributionData = [
-    { month: 'أكتوبر', week: '1', field: 'الإنسان والصحة', section: 'التغذية عند الإنسان', resource: 'مصدر الأغذية', time: '2سا' },
-    { month: 'أكتوبر', week: '2', field: 'الإنسان والصحة', section: 'التغذية عند الإنسان', resource: 'تركيب الأغذية', time: '2سا' },
-    { month: 'أكتوبر', week: '3', field: 'الإنسان والصحة', section: 'التغذية عند الإنسان', resource: 'دور الأغذية في الجسم', time: '2سا' },
-    { month: 'أكتوبر', week: '4', field: 'الإنسان والصحة', section: 'التغذية عند الإنسان', resource: 'الرواتب الغذائية', time: '2سا' },
-    { month: 'نوفمبر', week: '1', field: 'الإنسان والصحة', section: 'التغذية عند الإنسان', resource: 'النظافة الغذائية', time: '2سا' },
-    { month: 'نوفمبر', week: '2', field: 'الإنسان والصحة', section: 'التنفس عند الإنسان', resource: 'مفهوم التنفس', time: '2سا' },
-  ];
+  // Generate distribution data from the database
+  const levelData = CURRICULUM_DATABASE.find(l => l.id === selectedLevel);
+  
+  const distributionData = levelData ? levelData.fields.flatMap(field => 
+    field.sections.flatMap(section => 
+      section.resources.map(resource => ({
+        field: field.title,
+        section: section.title,
+        resource: resource.title,
+        time: '2سا' // Default time
+      }))
+    )
+  ).map((item, index) => {
+    // Distribute across months and weeks (simplified logic)
+    const months = ['أكتوبر', 'نوفمبر', 'ديسمبر', 'جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي'];
+    const monthIndex = Math.floor(index / 4) % months.length;
+    const weekIndex = (index % 4) + 1;
+    
+    return {
+      ...item,
+      month: months[monthIndex],
+      week: weekIndex.toString()
+    };
+  }) : [];
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-8" dir="rtl">
@@ -63,10 +78,9 @@ export const AnnualDistribution: React.FC<AnnualDistributionProps> = ({ user, on
               onChange={(e) => setSelectedLevel(e.target.value)}
               className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:ring-2 ring-primary/20"
             >
-              <option value="1 متوسط">1 متوسط</option>
-              <option value="2 متوسط">2 متوسط</option>
-              <option value="3 متوسط">3 متوسط</option>
-              <option value="4 متوسط">4 متوسط</option>
+              {CURRICULUM_DATABASE.map(l => (
+                <option key={l.id} value={l.id}>{l.title}</option>
+              ))}
             </select>
             <button onClick={handlePrint} className="btn-primary text-xs py-2">
               <Printer className="w-4 h-4" /> طباعة التوزيع
@@ -86,7 +100,7 @@ export const AnnualDistribution: React.FC<AnnualDistributionProps> = ({ user, on
             <div className="text-center space-y-2">
               <h2 className="text-xl font-black text-primary">التوزيع السنوي لبناء التعلمات</h2>
               <p className="font-bold">مادة علوم الطبيعة والحياة</p>
-              <p className="font-bold">المستوى: {selectedLevel}</p>
+              <p className="font-bold">المستوى: {levelData?.title || selectedLevel}</p>
             </div>
             <div className="text-left space-y-2">
               <p><span className="font-bold">السنة الدراسية:</span> {user.academicYear || '2024/2025'}</p>
